@@ -21,6 +21,9 @@ $ cp .env.example .env
 
 $ nvm use
 $ pnpm install
+
+$ pnpm docker:start
+$ pnpm migration:run
 ```
 
 ## Running the app
@@ -47,6 +50,12 @@ $ pnpm test:e2e
 
 # test coverage
 $ pnpm test:cov
+```
+
+## Migrations
+```bash
+# generate new migraion
+$ npm run migration:generate --name=migration-name
 ```
 
 ## Support
