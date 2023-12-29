@@ -35,6 +35,8 @@ export class BooksService {
         email: author.email,
       });
 
+      if (!getAuthor) throw new NotFoundException();
+
       book = this.bookRepository.create({
         title,
         author: getAuthor,
