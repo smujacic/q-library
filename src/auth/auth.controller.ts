@@ -55,8 +55,6 @@ export class AuthController {
   }
 
   @Post('/signin')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
   @ApiOperation({
     summary: 'Login',
     tags: ['Users'],
@@ -88,11 +86,22 @@ export class AuthController {
     summary: 'User status update',
     tags: ['Users'],
   })
+  @ApiBody({
+    examples: {
+      createUser: {
+        value: {
+          status: false,
+        },
+      },
+    },
+    type: AuthCredentialsDto,
+  })
   async changeUserStatus(
     @LoggedInUser() author: { email: string; role: string },
     @Param('id') id: string,
-    status: boolean,
+    @Body() payload: { status: boolean },
   ): Promise<void> {
+    const { status } = payload;
     return this.usersService.changeUserStatus(author, id, status);
   }
 

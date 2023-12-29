@@ -45,11 +45,7 @@ $ pnpm start:prod
 # unit tests
 $ pnpm test
 
-# e2e tests
-$ pnpm test:e2e
-
-# test coverage
-$ pnpm test:cov
+$ test:watch
 ```
 
 ## Migrations
