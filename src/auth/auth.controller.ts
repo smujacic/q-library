@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import {
@@ -6,18 +14,21 @@ import {
   ApiBearerAuth,
   ApiBody,
   ApiOperation,
+  ApiResponse,
 } from '@nestjs/swagger';
-import { RoleEnum } from './enum/roles.enum';
+
 import { UsersResponse } from './swagger/users-response';
 import { AuthCredentialsDto } from './dto/auth-credentials.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
-import { Roles } from './roles.decorator';
+import { LoggedInUser } from 'src/books/author.decorator';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post('/signeup')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({
     summary: 'Create new user',
     tags: ['Users'],
@@ -30,18 +41,22 @@ export class AuthController {
           firstname: 'Jon',
           lastname: '',
           password: 'A0B1C2D!',
-          role: RoleEnum.AUTHOR,
         },
       },
     },
     type: CreateUserDto,
   })
   @ApiBadRequestResponse(UsersResponse.badRequest)
-  async signeUp(@Body() createUserPayload: CreateUserDto): Promise<void> {
-    return this.usersService.createUser(createUserPayload);
+  async signeUp(
+    @LoggedInUser() author: { email: string; role: string },
+    @Body() createUserPayload: CreateUserDto,
+  ): Promise<void> {
+    return this.usersService.createUser(author, createUserPayload);
   }
 
   @Post('/signin')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({
     summary: 'Login',
     tags: ['Users'],
@@ -57,17 +72,41 @@ export class AuthController {
     },
     type: AuthCredentialsDto,
   })
+  @ApiResponse({
+    schema: { type: 'object', properties: { accessToken: { type: 'string' } } },
+  })
   async signIn(
     @Body() authCredentialsPayload: AuthCredentialsDto,
   ): Promise<{ accessToken: string }> {
     return this.usersService.signIn(authCredentialsPayload);
   }
 
-  @Get('/test')
+  @Patch('/:id/user-status')
   @UseGuards(JwtAuthGuard)
-  @Roles(RoleEnum.AUTHOR)
   @ApiBearerAuth()
-  test(): string {
-    return 'ok';
+  @ApiOperation({
+    summary: 'User status update',
+    tags: ['Users'],
+  })
+  async changeUserStatus(
+    @LoggedInUser() author: { email: string; role: string },
+    @Param('id') id: string,
+    status: boolean,
+  ): Promise<void> {
+    return this.usersService.changeUserStatus(author, id, status);
+  }
+
+  @Delete('/:id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Delete user',
+    tags: ['Users'],
+  })
+  async deleteUser(
+    @LoggedInUser() author: { email: string; role: string },
+    @Param('id') id: string,
+  ) {
+    return this.usersService.deleteUser(author, id);
   }
 }

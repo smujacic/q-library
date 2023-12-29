@@ -10,8 +10,7 @@ import { DatabaseConfig } from './configuration';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
 import { UsersService } from './auth/users.service';
-// import { PassportModule } from '@nestjs/passport';
-// import { JwtModule } from '@nestjs/jwt';
+import { BooksModule } from './books/books.module';
 
 @Module({
   imports: [
@@ -28,6 +27,7 @@ import { UsersService } from './auth/users.service';
       }),
     }),
     AuthModule,
+    BooksModule,
   ],
 })
 export class AppModule implements OnApplicationBootstrap, NestModule {
