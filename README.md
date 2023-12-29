@@ -45,7 +45,7 @@ $ pnpm start:prod
 # unit tests
 $ pnpm test
 
-$ test:watch
+$ pnpm test:watch
 ```
 
 ## Migrations
