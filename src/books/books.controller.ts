@@ -15,6 +15,7 @@ import { BooksService } from './books.service';
 import { CreateBookDto } from './dto/create-book.dto';
 import { Book } from './entity/book.entity';
 import { RoleEnum } from 'src/auth/enum/roles.enum';
+import { UpdateBookDto } from './dto/update-book.dto';
 
 @Controller('books')
 export class BooksController {
@@ -110,7 +111,7 @@ export class BooksController {
   async updateBook(
     @LoggedInUser() author: { email: string; role: string },
     @Param('id') id: string,
-    @Body() updateBookPayload: CreateBookDto,
+    @Body() updateBookPayload: UpdateBookDto,
   ): Promise<Book> {
     if (author.role === RoleEnum.ADMIN) {
       return this.booksService.updateBook(id, updateBookPayload);

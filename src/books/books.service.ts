@@ -8,6 +8,7 @@ import { Book } from './entity/book.entity';
 import { Repository } from 'typeorm';
 import { CreateBookDto } from './dto/create-book.dto';
 import { User } from '../auth/entity/user.entity';
+import { UpdateBookDto } from './dto/update-book.dto';
 
 @Injectable()
 export class BooksService {
@@ -179,9 +180,9 @@ export class BooksService {
    */
   async updateBook(
     id: string,
-    updateBookPayload: CreateBookDto,
+    updateBookPayload: UpdateBookDto,
   ): Promise<Book> {
-    const { title, genre, publicationDate } = updateBookPayload;
+    const { title, genre, publicationDate, pagesNumber } = updateBookPayload;
 
     const book = await this.bookRepository.findOneBy({ id });
 
@@ -192,6 +193,7 @@ export class BooksService {
       title,
       genre,
       publicationDate,
+      pagesNumber,
     });
 
     return this.bookRepository.save(updatedBook);
@@ -210,9 +212,9 @@ export class BooksService {
       role: string;
     },
     id: string,
-    updateBookPayload: CreateBookDto,
+    updateBookPayload: UpdateBookDto,
   ): Promise<Book> {
-    const { title, genre, publicationDate } = updateBookPayload;
+    const { title, genre, publicationDate, pagesNumber } = updateBookPayload;
 
     const getAuthor: User = await this.userRepository.findOneBy({
       email: author.email,
@@ -232,8 +234,9 @@ export class BooksService {
       title,
       genre,
       publicationDate,
+      pagesNumber,
     });
 
-    return this.bookRepository.remove(updatedBook);
+    return this.bookRepository.save(updatedBook);
   }
 }

@@ -131,7 +131,10 @@ export class UsersService {
   ): Promise<{ accessToken: string }> {
     const { email, password } = authCredentialsPayload;
 
-    const user: User = await this.userRepository.findOneBy({ email });
+    const user: User = await this.userRepository.findOneBy({
+      email,
+      isActive: true,
+    });
 
     this.logger.verbose(`signIn method: user ${JSON.stringify(user)}`);
 
@@ -160,6 +163,7 @@ export class UsersService {
     id: string,
     status: boolean,
   ): Promise<void> {
+    console.log(author.role);
     if (author.role === RoleEnum.AUTHOR) {
       const user: User = await this.userRepository.findOne({
         where: { id, email: author.email },
@@ -174,7 +178,7 @@ export class UsersService {
     }
 
     const user: User = await this.userRepository.findOneBy({ id });
-
+    console.log({ user });
     if (!user) throw new NotFoundException();
 
     user.isActive = status;
