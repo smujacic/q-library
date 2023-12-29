@@ -56,6 +56,8 @@ $ pnpm test:cov
 ```bash
 # generate new migraion
 $ npm run migration:generate --name=migration-name
+# run migration
+$ pnpm migration:run
 ```
 
 ## Support

@@ -60,5 +60,6 @@ export class CreateUserDto {
     required: true,
   })
   @IsEnum(RoleEnum)
-  role: RoleEnum;
+  @IsOptional()
+  role?: RoleEnum;
 }

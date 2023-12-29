@@ -1,7 +1,9 @@
 import {
+  ForbiddenException,
   Injectable,
   InternalServerErrorException,
   Logger,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -41,7 +43,7 @@ export class UsersService {
 
       if (!existingRole) {
         try {
-          const newRole = this.roleRepository.create({ name: role });
+          const newRole: Role = this.roleRepository.create({ name: role });
           await this.roleRepository.save(newRole);
         } catch (error) {
           this.logger.error(`createRole method: ${JSON.stringify(error)}`);
@@ -64,12 +66,18 @@ export class UsersService {
     );
 
     if (!existingSuperAdmin) {
-      this.createUser({
-        role: RoleEnum.ADMIN,
-        email: this.configService.get('SUPERADMIN_EMAIL'),
-        firstname: this.configService.get('SUPERADMIN_FIRSTNAME'),
-        password: this.configService.get('SUPERADMIN_PASSWORD'),
-      });
+      this.createUser(
+        {
+          role: RoleEnum.ADMIN,
+          email: this.configService.get('SUPERADMIN_EMAIL'),
+        },
+        {
+          role: RoleEnum.ADMIN,
+          email: this.configService.get('SUPERADMIN_EMAIL'),
+          firstname: this.configService.get('SUPERADMIN_FIRSTNAME'),
+          password: this.configService.get('SUPERADMIN_PASSWORD'),
+        },
+      );
     }
   }
 
@@ -79,11 +87,16 @@ export class UsersService {
    *
    * @param createUserPayload
    */
-  async createUser(createUserPayload: CreateUserDto): Promise<void> {
-    const { email, firstname, lastname, role, password } = createUserPayload;
+  async createUser(
+    author: { email: string; role: string },
+    createUserPayload: CreateUserDto,
+  ): Promise<void> {
+    if (author.role === RoleEnum.AUTHOR) throw new UnauthorizedException();
+
+    const { email, firstname, role, lastname, password } = createUserPayload;
 
     const getRole: Role = await this.roleRepository.findOneBy({
-      name: role,
+      name: role ? role : RoleEnum.AUTHOR,
     });
 
     this.logger.verbose(`createUser method: role ${JSON.stringify(role)}`);
@@ -92,12 +105,13 @@ export class UsersService {
       const salt = await bcrypt.genSalt();
       const hashedPassword = await bcrypt.hash(password, salt);
 
-      const superadmin = this.userRepository.create({
+      const superadmin: User = this.userRepository.create({
         email,
         firstname,
         lastname,
         password: hashedPassword,
         role: getRole,
+        isActive: true,
       });
 
       await this.userRepository.save(superadmin);
@@ -107,12 +121,19 @@ export class UsersService {
     }
   }
 
+  /**
+   *
+   * @param authCredentialsPayload
+   * @returns
+   */
   async signIn(
     authCredentialsPayload: AuthCredentialsDto,
   ): Promise<{ accessToken: string }> {
     const { email, password } = authCredentialsPayload;
 
-    const user = await this.userRepository.findOneBy({ email });
+    const user: User = await this.userRepository.findOneBy({ email });
+
+    this.logger.verbose(`signIn method: user ${JSON.stringify(user)}`);
 
     if (user && (await bcrypt.compare(password, user.password))) {
       const payload = { email, role: user.roleName };
@@ -125,5 +146,67 @@ export class UsersService {
     } else {
       throw new UnauthorizedException();
     }
+  }
+
+  /**
+   *
+   * @param author
+   * @param id
+   * @param status
+   * @returns
+   */
+  async changeUserStatus(
+    author: { email: string; role: string },
+    id: string,
+    status: boolean,
+  ): Promise<void> {
+    if (author.role === RoleEnum.AUTHOR) {
+      const user: User = await this.userRepository.findOne({
+        where: { id, email: author.email },
+      });
+
+      if (!user) throw new NotFoundException();
+
+      user.isActive = status;
+      this.userRepository.save(user);
+
+      return;
+    }
+
+    const user: User = await this.userRepository.findOneBy({ id });
+
+    if (!user) throw new NotFoundException();
+
+    user.isActive = status;
+    this.userRepository.save(user);
+
+    return;
+  }
+
+  /**
+   *
+   * @param author
+   * @param id
+   * @returns
+   */
+  async deleteUser(
+    author: { email: string; role: string },
+    id: string,
+  ): Promise<void> {
+    if (author.role === RoleEnum.ADMIN) {
+      const user: User = await this.userRepository.findOneBy({ id });
+
+      if (!user) throw new NotFoundException();
+
+      if (user.roleName === RoleEnum.ADMIN && user.isActive) {
+        throw new ForbiddenException();
+      }
+
+      this.userRepository.remove(user);
+
+      return;
+    }
+
+    throw new UnauthorizedException();
   }
 }

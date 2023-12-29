@@ -30,6 +30,8 @@ export class JwtAuthGuard implements CanActivate {
         secret: this.configService.get('JWT_SECRET'),
       });
 
+      request.user = payload;
+
       const role = this.reflector.getAllAndOverride('roles', [
         context.getHandler(),
         context.getClass(),
