@@ -44,7 +44,7 @@ $ pnpm start:prod
 [http://localhost:3200/api/docs](http://localhost:3200/api/docs)
 
 ## Super admin credentials
-email: super@example.com
+email: super@example.com \
 password: Admin2023
 
 ## Test
