@@ -22,8 +22,8 @@ $ cp .env.example .env
 $ nvm use
 $ pnpm install
 
-$ pnpm migration:run
 $ pnpm docker:start
+$ pnpm migration:run
 ```
 
 ## Running the app
